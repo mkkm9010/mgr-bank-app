@@ -207,9 +207,9 @@
 
     <div id="hub-screen" class="screen screen-hidden flex flex-col h-full">
         <header class="p-4 flex items-center justify-between pt-10">
-            <button onclick="toggleMenu()" class="text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
+            <button onclick="toggleMenu()" class="text-gray-400 p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
             <h1 id="hub-title" class="text-xl font-bold">1st Year</h1>
-            <button class="text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+            <button class="text-gray-400 p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
         </header>
 
         <main class="flex-grow p-4 overflow-y-auto">
@@ -343,10 +343,10 @@
     </div>
 
     <div id="paper-selection-screen" class="screen screen-hidden absolute inset-0 flex flex-col text-white">
-        <header class="p-4 flex items-center justify-between pt-10">
-            <button onclick="goBackToHub()" class="flex items-center text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg><span class="ml-1 text-lg">Back</span></button>
-            <h1 id="paper-selection-title" class="text-xl font-bold">Anatomy</h1>
-            <div class="w-20"></div> </header>
+        <header class="p-4 flex items-center pt-10">
+            <button onclick="goBackToHub()" class="p-2 text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <h1 id="paper-selection-title" class="text-xl font-bold text-center flex-grow">Anatomy</h1>
+            <div class="w-10"></div> </header>
         <main class="flex-grow p-8 flex flex-col items-center justify-center space-y-6">
             <div class="w-full max-w-xs"><div onclick="selectPaper(1)" class="selection-button rounded-lg p-6 text-center text-xl font-bold cursor-pointer">Paper 1</div></div>
             <div class="w-full max-w-xs"><div onclick="selectPaper(2)" class="selection-button rounded-lg p-6 text-center text-xl font-bold cursor-pointer">Paper 2</div></div>
@@ -354,10 +354,10 @@
     </div>
 
     <div id="detailed-progress-screen" class="screen screen-hidden absolute inset-0 flex flex-col text-white">
-        <header class="p-4 flex items-center justify-between pt-10">
-            <button onclick="goBackToHub()" class="flex items-center text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg><span class="ml-1 text-lg">Back</span></button>
-            <h1 class="text-xl font-bold">Detailed Progress</h1>
-            <div class="w-20"></div> </header>
+        <header class="p-4 flex items-center pt-10">
+            <button onclick="goBackToHub()" class="p-2 text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <h1 class="text-xl font-bold text-center flex-grow">Detailed Progress</h1>
+            <div class="w-10"></div> </header>
         <main class="flex-grow p-4 overflow-y-auto">
             <div id="detailed-subjects-container" class="space-y-4">
                 </div>
@@ -365,10 +365,10 @@
     </div>
 
     <div id="chapter-selection-screen" class="screen screen-hidden absolute inset-0 flex flex-col text-white">
-        <header class="p-4 flex items-center justify-between pt-10">
-            <button id="chapter-back-button" class="flex items-center text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg><span class="ml-1 text-lg">Back</span></button>
-            <h1 id="chapter-selection-title" class="text-xl font-bold">Chapters</h1>
-            <div class="w-20"></div> </header>
+        <header class="p-4 flex items-center pt-10">
+            <button id="chapter-back-button" class="p-2 text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <h1 id="chapter-selection-title" class="text-xl font-bold text-center flex-grow">Chapters</h1>
+            <div class="w-10"></div> </header>
         <main class="flex-grow p-4 overflow-y-auto">
             <div id="chapters-container" class="space-y-3">
                 </div>
@@ -376,10 +376,10 @@
     </div>
 
     <div id="question-view-screen" class="screen screen-hidden absolute inset-0 flex flex-col text-white">
-        <header class="p-4 flex items-center justify-between pt-10">
-            <button onclick="goBackToChapters()" class="flex items-center text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg><span class="ml-1 text-lg">Back</span></button>
-            <h1 id="question-view-title" class="text-xl font-bold text-center"></h1>
-            <div class="w-20"></div> </header>
+        <header class="p-4 flex items-center pt-10">
+            <button onclick="goBackToChapters()" class="p-2 text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <h1 id="question-view-title" class="text-xl font-bold text-center flex-grow"></h1>
+            <div class="w-10"></div> </header>
         <div class="flex border-b border-gray-700 mx-4">
             <button id="question-tab-essay" onclick="switchQuestionTab('Essay')" class="flex-1 py-3 text-center font-semibold question-tab-active">Essay</button>
             <button id="question-tab-short-note" onclick="switchQuestionTab('Short Note')" class="flex-1 py-3 text-center font-semibold question-tab-inactive">Short Note</button>
@@ -442,12 +442,12 @@
         </div>
         <button onclick="goBackToHub()" class="selection-button w-full max-w-sm mt-8 py-4 rounded-xl text-lg font-semibold">Back to Hub</button>
     </div>
-
+    
     <div id="premium-screen" class="screen screen-hidden absolute inset-0 flex flex-col text-white">
-        <header class="p-4 flex items-center justify-between pt-10">
-            <button onclick="goBackToHub()" class="flex items-center text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg><span class="ml-1 text-lg">Back</span></button>
-            <h1 class="text-xl font-bold">Premium</h1>
-            <div class="w-20"></div> </header>
+        <header class="p-4 flex items-center pt-10">
+            <button onclick="goBackToHub()" class="p-2 text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <h1 class="text-xl font-bold text-center flex-grow">Premium</h1>
+            <div class="w-10"></div> </header>
         <main class="flex-grow p-4 overflow-y-auto">
             <div class="bg-gray-800 rounded-lg p-4 mb-6">
                 <ul class="space-y-3 text-gray-300">
@@ -632,7 +632,7 @@
     const questionViewScreen = document.getElementById('question-view-screen');
     const quizScreen = document.getElementById('quiz-screen');
     const quizResultsScreen = document.getElementById('quiz-results-screen');
-    const premiumScreen = document.getElementById('premium-screen'); // <-- NEW
+    const premiumScreen = document.getElementById('premium-screen');
 
     // Dynamic elements
     const hubTitle = document.getElementById('hub-title');
@@ -649,13 +649,11 @@
     
     // --- START OF MODIFIED AND NEW FUNCTIONS ---
 
-    // UPDATED to show the new screen
     window.showPremium = () => {
         toggleMenu(); 
         showScreen(premiumScreen);
     }
 
-    // UPDATED to handle the new screen
     function showScreen(screenToShow) {
         [yearScreen, hubScreen, paperScreen, detailedProgressScreen, chapterScreen, questionViewScreen, quizScreen, quizResultsScreen, premiumScreen].forEach(screen => {
             if (screen) {
@@ -665,7 +663,6 @@
         });
     }
 
-    // MODIFIED FOR ANDROID COMPATIBILITY
     window.shareApp = () => {
         const shareText = 'Check out this awesome question bank app for MGR University students!';
         if (window.AndroidInterface && typeof window.AndroidInterface.shareText === 'function') {
@@ -910,8 +907,7 @@
                     <div class="ml-4 flex-1">
                         <label for="${questionId}" class="text-gray-300">${q.questionText}</label>
                         ${q.options ? `<div class="mt-2 text-sm text-gray-400 space-y-1">${q.options.map(o => `<div>- ${o}</div>`).join('')}</div>` : ''}
-                        <div class="flex items-center justify-between mt-3 text-xs text-gray-400">
-                            <span class="bg-blue-900 text-blue-300 px-2 py-1 rounded-md font-semibold">${q.questionType}</span>
+                        <div class="flex items-center justify-end mt-3 text-xs text-gray-400">
                             <span class="font-bold text-orange-400">Repeated: ${q.repeatCount} times</span>
                         </div>
                     </div>
