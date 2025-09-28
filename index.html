@@ -172,6 +172,13 @@
             fill: #f59e0b;
             stroke: #f59e0b;
         }
+        .loader {
+            border-top-color: #14b8a6;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="text-white">
@@ -189,8 +196,12 @@
 
 <div class="app-container flex flex-col h-full">
 
-    <div id="year-selection-screen" class="screen screen-visible absolute inset-0 flex flex-col items-center justify-center p-8 text-white text-center">
+    <div id="loading-screen" class="screen screen-visible absolute inset-0 flex flex-col items-center justify-center p-8 text-white text-center">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-600 h-12 w-12 mb-4"></div>
+        <p class="text-lg text-gray-400">Loading your profile...</p>
+    </div>
 
+    <div id="year-selection-screen" class="screen screen-hidden absolute inset-0 flex flex-col items-center justify-center p-8 text-white text-center">
         <div class="mb-8">
             <svg class="w-24 h-24 mx-auto" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="50" cy="50" r="48" stroke="#14b8a6" stroke-width="4"/>
@@ -199,7 +210,6 @@
                 <path d="M65 43V57" stroke="#14b8a6" stroke-width="5" stroke-linecap="round"/>
             </svg>
         </div>
-
         <div class="mb-10">
             <h1 class="text-3xl font-bold mb-2 text-white">Welcome to MGR Q-Bank</h1>
             <p class="text-gray-300 text-lg">Please select your academic year to get started.</p>
@@ -306,7 +316,7 @@
                 </div>
                 <button class="w-full bg-teal-500 text-white font-bold p-4 rounded-lg mt-6 selection-button" onclick="startStudySession()">Start Studying</button>
             </div>
-            <div id="content-bookmarks" class="hidden"><p class="text-center mt-10 text-gray-400">Your bookmarked questions will appear here.</p></div>
+            <div id="content-bookmarks" class="hidden p-4"> </div>
             <div id="content-profile" class="hidden">
                 <div class="p-4">
                     <div class="flex flex-col items-center">
@@ -624,7 +634,7 @@
     let localSubjectsData = {};
     let currentQuestions = [];
     let completedQuestions = {}; 
-    let bookmarkedQuestions = {}; // <-- NEW: To track bookmarks
+    let bookmarkedQuestions = {}; 
     let quizState = {};
 
     let currentYear = '1st Year';
@@ -632,6 +642,7 @@
     let currentBackTarget = 'hub';
 
     // Screen elements
+    const loadingScreen = document.getElementById('loading-screen'); 
     const yearScreen = document.getElementById('year-selection-screen');
     const hubScreen = document.getElementById('hub-screen');
     const paperScreen = document.getElementById('paper-selection-screen');
@@ -655,7 +666,86 @@
     const sideMenu = document.getElementById('side-menu');
     const menuOverlay = document.getElementById('menu-overlay');
     
-    // --- START OF MODIFIED AND NEW FUNCTIONS ---
+    // =============================================
+    // ========== NEW BOOKMARK FUNCTIONS ===========
+    // =============================================
+    window.toggleBookmark = async (questionId) => {
+        const button = document.getElementById(`bookmark-btn-${questionId}`);
+        if (!button) return;
+
+        if (bookmarkedQuestions[questionId]) {
+            delete bookmarkedQuestions[questionId];
+            button.classList.remove('bookmarked');
+        } else {
+            bookmarkedQuestions[questionId] = true;
+            button.classList.add('bookmarked');
+        }
+
+        if (userId) {
+            const userDocRef = doc(db, "users", userId);
+            try {
+                await setDoc(userDocRef, { bookmarkedQuestions: bookmarkedQuestions }, { merge: true });
+                console.log("Bookmarks updated in Firebase.");
+            } catch (error) {
+                console.error("Error saving bookmarks:", error);
+            }
+        }
+    }
+
+    async function renderBookmarks() {
+        const container = document.getElementById('content-bookmarks');
+        if (Object.keys(bookmarkedQuestions).length === 0) {
+            container.innerHTML = `<p class="text-center mt-10 text-gray-400">You haven't bookmarked any questions yet.</p>`;
+            return;
+        }
+
+        container.innerHTML = `<div class="space-y-4"></div>`;
+        const bookmarkListContainer = container.querySelector('div');
+        
+        let fullBookmarkDetails = [];
+        const subjects = localSubjectsData[currentYear] || [];
+
+        subjects.forEach(subject => {
+            const chapters = subject.chapters || Object.values(subject.papers).flatMap(p => p.chapters);
+            chapters.forEach(chapter => {
+                if (chapter.questions) {
+                    chapter.questions.forEach(q => {
+                        const questionId = `${subject.subjectName}-${chapter.chapterName}-${q.questionText}`.replace(/[^\w-]/g, '');
+                        if (bookmarkedQuestions[questionId]) {
+                            fullBookmarkDetails.push({
+                                ...q,
+                                id: questionId,
+                                subjectName: subject.subjectName,
+                                chapterName: chapter.chapterName
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        if (fullBookmarkDetails.length === 0) {
+             container.innerHTML = `<p class="text-center mt-10 text-gray-400">Loading... if this persists, your bookmarks might be from another year.</p>`;
+             return;
+        }
+        
+        bookmarkListContainer.innerHTML = fullBookmarkDetails.map(q => {
+            return `
+                <div class="question-card rounded-lg p-4">
+                    <p class="text-gray-300 mb-2">${q.questionText}</p>
+                    <div class="flex items-center justify-between mt-3 text-xs text-gray-400">
+                        <span class="bg-gray-700 text-gray-300 px-2 py-1 rounded-md font-semibold">${q.subjectName} / ${q.chapterName}</span>
+                        <button onclick="toggleBookmark('${q.id}')" class="bookmark-btn bookmarked p-2 text-orange-400">
+                            <svg class="w-6 h-6" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
 
     window.showPremium = () => {
         toggleMenu(); 
@@ -663,7 +753,7 @@
     }
 
     function showScreen(screenToShow) {
-        [yearScreen, hubScreen, paperScreen, detailedProgressScreen, chapterScreen, questionViewScreen, quizScreen, quizResultsScreen, premiumScreen].forEach(screen => {
+        [loadingScreen, yearScreen, hubScreen, paperScreen, detailedProgressScreen, chapterScreen, questionViewScreen, quizScreen, quizResultsScreen, premiumScreen].forEach(screen => {
             if (screen) {
                 screen.classList.toggle('screen-visible', screen === screenToShow);
                 screen.classList.toggle('screen-hidden', screen !== screenToShow);
@@ -726,7 +816,7 @@
             userId = null;
             localSubjectsData = {};
             completedQuestions = {};
-            bookmarkedQuestions = {}; // <-- NEW: Reset on logout
+            bookmarkedQuestions = {}; 
             showScreen(yearScreen);
         }).catch((error) => {
             console.error('Sign out error', error);
@@ -746,8 +836,6 @@
         }
     }
     
-    // --- END OF MODIFIED AND NEW FUNCTIONS ---
-
     window.selectYear = async (year) => {
          if (!userId) {
             const toast = document.createElement('div');
@@ -894,9 +982,6 @@
         renderQuestions(type);
     }
 
-    // =============================================
-    // ========== MODIFIED RENDERQUESTIONS =========
-    // =============================================
     function renderQuestions(type) {
         let filteredQuestions = currentQuestions.filter(q => q.questionType === type);
         const filterValue = document.getElementById('filter-select').value;
@@ -913,8 +998,6 @@
         filteredQuestions.forEach(q => {
             const questionId = `${currentSubject}-${currentChapter}-${q.questionText}`.replace(/[^\w-]/g, '');
             const isChecked = completedQuestions[questionId] ? 'checked' : '';
-            
-            // --- NEW: BOOKMARK BUTTON HTML ---
             const isBookmarked = bookmarkedQuestions[questionId] ? 'bookmarked' : '';
             const bookmarkButtonHTML = `
                 <button id="bookmark-btn-${questionId}" onclick="toggleBookmark('${questionId}')" class="bookmark-btn p-2 text-gray-500 hover:text-orange-400 ${isBookmarked}">
@@ -923,7 +1006,6 @@
                     </svg>
                 </button>
             `;
-            // --- END NEW ---
 
             questionsContainer.innerHTML += `
                 <div class="question-card rounded-lg p-4 flex items-start">
@@ -1050,6 +1132,7 @@
             activeContent.classList.remove('hidden');
             if(tabName === 'study') populateStudyModeFilters();
             if(tabName === 'profile') populateProfileScreen();
+            if(tabName === 'bookmarks') renderBookmarks(); // <-- NEW: Call the function
         }
         else contentHome.classList.remove('hidden');
     }
@@ -1211,7 +1294,7 @@
     }
 
     async function main() {
-        loadIcons(); // Load the icons when the app starts
+        loadIcons(); 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 userId = user.uid;
@@ -1225,7 +1308,6 @@
                     if (userData.completedQuestions) {
                         completedQuestions = userData.completedQuestions;
                     }
-                    // --- NEW: Load bookmarks from Firebase ---
                     if (userData.bookmarkedQuestions) {
                         bookmarkedQuestions = userData.bookmarkedQuestions;
                     }
