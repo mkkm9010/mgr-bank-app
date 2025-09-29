@@ -197,10 +197,12 @@
 <div class="app-container flex flex-col h-full">
 
     <div id="loading-screen" class="screen screen-visible absolute inset-0 flex flex-col items-center justify-center p-8 text-white text-center">
-        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-600 h-12 w-12 mb-4"></div>
+        <svg class="animate-spin h-12 w-12 text-teal-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
         <p class="text-lg text-gray-400">Loading your profile...</p>
     </div>
-
     <div id="year-selection-screen" class="screen screen-hidden absolute inset-0 flex flex-col items-center justify-center p-8 text-white text-center">
         <div class="mb-8">
             <svg class="w-24 h-24 mx-auto" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -986,9 +988,9 @@
         let filteredQuestions = currentQuestions.filter(q => q.questionType === type);
         const filterValue = document.getElementById('filter-select').value;
         if (filterValue === 'most') {
-            filteredQuestions.sort((a, b) => (b.repeatCount || 0) - (a.repeatCount || 0));
+            filteredQuestions.sort((a, b) => (b.repeated || 0) - (a.repeated || 0));
         } else {
-            filteredQuestions.sort((a, b) => (a.repeatCount || 0) - (b.repeatCount || 0));
+            filteredQuestions.sort((a, b) => (a.repeated || 0) - (b.repeated || 0));
         }
         questionsContainer.innerHTML = '';
         if (filteredQuestions.length === 0) {
@@ -1014,7 +1016,7 @@
                         <label for="${questionId}" class="text-gray-300">${q.questionText}</label>
                         ${q.options ? `<div class="mt-2 text-sm text-gray-400 space-y-1">${q.options.map(o => `<div>- ${o}</div>`).join('')}</div>` : ''}
                         <div class="flex items-center justify-between mt-3 text-xs text-gray-400">
-                            <span class="font-bold text-orange-400">Repeated: ${q.repeatCount} times</span>
+                            <span class="font-bold text-orange-400">Repeated: ${q.repeated} times</span>
                             ${bookmarkButtonHTML} 
                         </div>
                     </div>
