@@ -172,10 +172,6 @@
             fill: #f59e0b;
             stroke: #f59e0b;
         }
-        .loader {
-            border-top-color: #14b8a6;
-            animation: spin 1s linear infinite;
-        }
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -203,6 +199,7 @@
         </svg>
         <p class="text-lg text-gray-400">Loading your profile...</p>
     </div>
+
     <div id="year-selection-screen" class="screen screen-hidden absolute inset-0 flex flex-col items-center justify-center p-8 text-white text-center">
         <div class="mb-8">
             <svg class="w-24 h-24 mx-auto" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -281,10 +278,8 @@
 
                 <div class="dashboard-card rounded-lg p-4">
                     <h3 class="font-bold mb-4">Recent Activity</h3>
-                    <div class="space-y-4">
-                        <div class="flex items-center"><div class="bg-green-500/20 p-2 rounded-full mr-3"><svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div><p class="text-sm text-gray-300">Completed 15 Anatomy questions <span class="text-gray-500 ml-2">2 hours ago</span></p></div>
-                        <div class="flex items-center"><div class="bg-orange-500/20 p-2 rounded-full mr-3"><svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg></div><p class="text-sm text-gray-300">Bookmarked 3 Physiology questions <span class="text-gray-500 ml-2">1 day ago</span></p></div>
-                        <div class="flex items-center"><div class="bg-indigo-500/20 p-2 rounded-full mr-3"><svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg></div><p class="text-sm text-gray-300">Added notes for Biochemistry chapter <span class="text-gray-500 ml-2">2 days ago</span></p></div>
+                    <div id="recent-activity-container" class="space-y-4">
+                        <p class="text-sm text-gray-500">No recent activity yet.</p>
                     </div>
                 </div>
             </div>
@@ -318,7 +313,8 @@
                 </div>
                 <button class="w-full bg-teal-500 text-white font-bold p-4 rounded-lg mt-6 selection-button" onclick="startStudySession()">Start Studying</button>
             </div>
-            <div id="content-bookmarks" class="hidden p-4"> </div>
+            <div id="content-bookmarks" class="hidden p-4">
+                </div>
             <div id="content-profile" class="hidden">
                 <div class="p-4">
                     <div class="flex flex-col items-center">
@@ -360,7 +356,7 @@
             </button>
         </footer>
     </div>
-
+    
     <div id="paper-selection-screen" class="screen screen-hidden absolute inset-0 flex flex-col text-white">
         <header class="p-4 flex items-center pt-10">
             <button onclick="goBackToHub()" class="p-2 text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
@@ -530,7 +526,7 @@
                             <span class="text-3xl font-bold mr-2">₹ 499</span>
                             <del class="text-gray-200">999</del>
                         </div>
-                        <button class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-full transition-colors">PAY NOW</button>
+                        <button onclick="initiatePayment(499, '2 Years Combo')" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-full transition-colors">PAY NOW</button>
                     </div>
                 </div>
                 <div class="rounded-lg p-4 bg-gradient-to-r from-purple-600 to-indigo-700 shadow-lg">
@@ -541,7 +537,7 @@
                             <span class="text-3xl font-bold mr-2">₹ 299</span>
                             <del class="text-gray-200">599</del>
                         </div>
-                        <button class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-full transition-colors">PAY NOW</button>
+                        <button onclick="initiatePayment(299, 'Current Year - 2nd Year MBBS')" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-full transition-colors">PAY NOW</button>
                     </div>
                 </div>
                 <div class="rounded-lg p-4 bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg">
@@ -551,7 +547,7 @@
                             <span class="text-3xl font-bold mr-2">₹ 699</span>
                             <del class="text-gray-200">1399</del>
                         </div>
-                        <button class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-full transition-colors">PAY NOW</button>
+                        <button onclick="initiatePayment(699, '3 Years Combo')" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-full transition-colors">PAY NOW</button>
                     </div>
                 </div>
             </div>
@@ -637,11 +633,13 @@
     let currentQuestions = [];
     let completedQuestions = {}; 
     let bookmarkedQuestions = {}; 
+    let recentActivities = []; 
     let quizState = {};
-
+    let currentUserData = {};
     let currentYear = '1st Year';
     let currentChapter = '';
     let currentBackTarget = 'hub';
+    let currentScreenId = 'loading-screen';
 
     // Screen elements
     const loadingScreen = document.getElementById('loading-screen'); 
@@ -667,27 +665,85 @@
     const contentHome = document.getElementById('content-home');
     const sideMenu = document.getElementById('side-menu');
     const menuOverlay = document.getElementById('menu-overlay');
+
+    function formatTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " years ago";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " months ago";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " days ago";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " hours ago";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " minutes ago";
+        return "Just now";
+    }
+
+    function renderRecentActivity() {
+        const container = document.getElementById('recent-activity-container');
+        if (!recentActivities || recentActivities.length === 0) {
+            container.innerHTML = `<p class="text-sm text-gray-500">No recent activity yet.</p>`;
+            return;
+        }
+
+        container.innerHTML = recentActivities.map(activity => {
+            const iconHTML = activity.type === 'bookmark' 
+                ? `<div class="bg-orange-500/20 p-2 rounded-full mr-3"><svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg></div>`
+                : `<div class="bg-green-500/20 p-2 rounded-full mr-3"><svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>`;
+            
+            return `
+                <div class="flex items-center">
+                    ${iconHTML}
+                    <p class="text-sm text-gray-300">${activity.message} <span class="text-gray-500 ml-2">${formatTimeAgo(new Date(activity.timestamp))}</span></p>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function logActivity(message, type) {
+        if (!userId) return;
+
+        const newActivity = {
+            message: message,
+            type: type, // 'bookmark' or 'complete'
+            timestamp: new Date().toISOString()
+        };
+
+        recentActivities.unshift(newActivity);
+        recentActivities = recentActivities.slice(0, 5);
+        
+        renderRecentActivity();
+
+        const userDocRef = doc(db, "users", userId);
+        try {
+            await setDoc(userDocRef, { recentActivities: recentActivities }, { merge: true });
+        } catch (e) {
+            console.error("Error logging activity: ", e);
+        }
+    }
     
-    // =============================================
-    // ========== NEW BOOKMARK FUNCTIONS ===========
-    // =============================================
     window.toggleBookmark = async (questionId) => {
         const button = document.getElementById(`bookmark-btn-${questionId}`);
         if (!button) return;
 
+        const questionText = document.querySelector(`label[for="${questionId}"]`).textContent.substring(0, 20) + '...';
+
         if (bookmarkedQuestions[questionId]) {
             delete bookmarkedQuestions[questionId];
             button.classList.remove('bookmarked');
+            logActivity(`Un-bookmarked "${questionText}"`, 'bookmark');
         } else {
             bookmarkedQuestions[questionId] = true;
             button.classList.add('bookmarked');
+            logActivity(`Bookmarked "${questionText}"`, 'bookmark');
         }
-
+        
         if (userId) {
             const userDocRef = doc(db, "users", userId);
             try {
                 await setDoc(userDocRef, { bookmarkedQuestions: bookmarkedQuestions }, { merge: true });
-                console.log("Bookmarks updated in Firebase.");
             } catch (error) {
                 console.error("Error saving bookmarks:", error);
             }
@@ -727,7 +783,7 @@
         });
 
         if (fullBookmarkDetails.length === 0) {
-             container.innerHTML = `<p class="text-center mt-10 text-gray-400">Loading... if this persists, your bookmarks might be from another year.</p>`;
+             container.innerHTML = `<p class="text-center mt-10 text-gray-400">Your bookmarks are for a different academic year.</p>`;
              return;
         }
         
@@ -737,7 +793,7 @@
                     <p class="text-gray-300 mb-2">${q.questionText}</p>
                     <div class="flex items-center justify-between mt-3 text-xs text-gray-400">
                         <span class="bg-gray-700 text-gray-300 px-2 py-1 rounded-md font-semibold">${q.subjectName} / ${q.chapterName}</span>
-                        <button onclick="toggleBookmark('${q.id}')" class="bookmark-btn bookmarked p-2 text-orange-400">
+                        <button onclick="toggleBookmark('${q.id}'); renderBookmarks();" class="bookmark-btn bookmarked p-2 text-orange-400">
                             <svg class="w-6 h-6" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
                             </svg>
@@ -747,7 +803,6 @@
             `;
         }).join('');
     }
-
 
     window.showPremium = () => {
         toggleMenu(); 
@@ -761,6 +816,7 @@
                 screen.classList.toggle('screen-hidden', screen !== screenToShow);
             }
         });
+        currentScreenId = screenToShow.id; // <-- ADD THIS LINE
     }
 
     window.shareApp = () => {
@@ -783,7 +839,44 @@
         }
         toggleMenu();
     }
-    
+    window.handleNativeBack = () => {
+        // First, check if the side menu is open and close it if it is
+        if (sideMenu.classList.contains('menu-open')) {
+            toggleMenu();
+            return;
+        }
+
+        // Navigate back based on which screen is currently showing
+        switch (currentScreenId) {
+            case 'question-view-screen':
+                goBackToChapters();
+                break;
+            case 'chapter-selection-screen':
+                document.getElementById('chapter-back-button').click(); // Use the existing back logic
+                break;
+            case 'paper-selection-screen':
+            case 'detailed-progress-screen':
+            case 'premium-screen':
+            case 'quiz-results-screen':
+                goBackToHub();
+                break;
+            case 'quiz-screen':
+                goBackToHubFromQuiz();
+                break;
+            case 'hub-screen':
+            case 'year-selection-screen':
+            case 'login-screen':
+                // If on a main screen, tell the native app to exit
+                if (window.AndroidInterface && window.AndroidInterface.closeApp) {
+                    window.AndroidInterface.closeApp();
+                }
+                break;
+            default:
+                // As a fallback, try to go to the hub screen
+                goBackToHub();
+                break;
+        }
+    };
     window.updateQBank = () => {
         toggleMenu();
         alert("Checking for updates...");
@@ -819,6 +912,7 @@
             localSubjectsData = {};
             completedQuestions = {};
             bookmarkedQuestions = {}; 
+            recentActivities = [];
             showScreen(yearScreen);
         }).catch((error) => {
             console.error('Sign out error', error);
@@ -1016,7 +1110,7 @@
                         <label for="${questionId}" class="text-gray-300">${q.questionText}</label>
                         ${q.options ? `<div class="mt-2 text-sm text-gray-400 space-y-1">${q.options.map(o => `<div>- ${o}</div>`).join('')}</div>` : ''}
                         <div class="flex items-center justify-between mt-3 text-xs text-gray-400">
-                            <span class="font-bold text-orange-400">Repeated: ${q.repeated} times</span>
+                            <span class="font-bold text-orange-400">Repeated: ${q.repeated || 0} times</span>
                             ${bookmarkButtonHTML} 
                         </div>
                     </div>
@@ -1030,7 +1124,14 @@
     });
 
     window.toggleQuestionComplete = async (questionId) => {
-         completedQuestions[questionId] = document.getElementById(questionId).checked;
+         const isChecked = document.getElementById(questionId).checked;
+         completedQuestions[questionId] = isChecked;
+
+         if(isChecked){
+            const questionText = document.querySelector(`label[for="${questionId}"]`).textContent.substring(0, 20) + '...';
+            logActivity(`Completed "${questionText}"`, 'complete');
+         }
+
          if (userId) {
             const userDocRef = doc(db, "users", userId);
             try {
@@ -1134,7 +1235,7 @@
             activeContent.classList.remove('hidden');
             if(tabName === 'study') populateStudyModeFilters();
             if(tabName === 'profile') populateProfileScreen();
-            if(tabName === 'bookmarks') renderBookmarks(); // <-- NEW: Call the function
+            if(tabName === 'bookmarks') renderBookmarks();
         }
         else contentHome.classList.remove('hidden');
     }
@@ -1298,31 +1399,44 @@
     async function main() {
         loadIcons(); 
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userId = user.uid;
-                const userDocRef = doc(db, "users", userId);
-                const docSnap = await getDoc(userDocRef);
-                if (docSnap.exists()) {
-                    const userData = docSnap.data();
-                    const userName = userData.name || 'User';
-                    document.getElementById('welcome-message').textContent = `Welcome back, ${userName}!`;
-                    document.getElementById('profile-name').value = userData.name || '';
-                    if (userData.completedQuestions) {
-                        completedQuestions = userData.completedQuestions;
-                    }
-                    if (userData.bookmarkedQuestions) {
-                        bookmarkedQuestions = userData.bookmarkedQuestions;
-                    }
-                    if (userData.selectedYear) {
-                        displayHubForYear(userData.selectedYear);
+            try {
+                if (user) {
+                    userId = user.uid;
+                    const userDocRef = doc(db, "users", userId);
+                    const docSnap = await getDoc(userDocRef);
+                    if (docSnap.exists()) {
+                        const userData = docSnap.data();
+                        currentUserData = userData;
+                        const userName = userData.name || 'User';
+                        document.getElementById('welcome-message').textContent = `Welcome back, ${userName}!`;
+                        document.getElementById('profile-name').value = userData.name || '';
+                        if (userData.completedQuestions) {
+                            completedQuestions = userData.completedQuestions;
+                        }
+                        if (userData.bookmarkedQuestions) {
+                            bookmarkedQuestions = userData.bookmarkedQuestions;
+                        }
+                        if (userData.recentActivities) {
+                            recentActivities = userData.recentActivities;
+                        }
+                        renderRecentActivity();
+                        if (userData.selectedYear) {
+                            displayHubForYear(userData.selectedYear);
+                        } else {
+                            showScreen(yearScreen);
+                        }
                     } else {
                         showScreen(yearScreen);
                     }
                 } else {
-                    showScreen(yearScreen);
+                    signInAnonymously(auth).catch((error) => console.error("Anonymous sign-in failed:", error));
                 }
-            } else {
-                signInAnonymously(auth).catch((error) => console.error("Anonymous sign-in failed:", error));
+            } catch (error) {
+                console.error("Error during app startup:", error);
+                const loadingText = document.querySelector("#loading-screen p");
+                if (loadingText) {
+                    loadingText.textContent = "Failed to load. Please check your connection.";
+                }
             }
         });
     }
