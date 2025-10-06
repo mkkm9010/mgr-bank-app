@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>MGR Q-Bank App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Basic styles to make it feel like a native app */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            background-color: #0d1117;
+        }
+        .app-container {
+            height: 100%;
+            width: 100%;
+            background-color: #0d1117;
+        }
+        .progress-bar-bg { background-color: #374151; }
+        .progress-bar-fill { background-color: #14b8a6; }
+        .subject-card {
+            background-color: #1f2937;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid transparent;
+        }
+        .subject-card:hover {
+            background-color: #2b3a4f;
+            border-color: #14b8a6;
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(20, 184, 166, 0.2);
+        }
+        .screen { transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; }
+        .screen-hidden { opacity: 0; transform: scale(0.98); pointer-events: none; }
+        .screen-visible { opacity: 1; transform: scale(1); }
+
+        .side-menu {
+            position: absolute;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            background-color: #1f2937;
+        }
+        .menu-open {
+            transform: translateX(0);
+        }
+        .menu-overlay {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+            background-color: rgba(0,0,0,0.6);
+        }
+        .overlay-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .menu-item {
+            transition: background-color 0.2s;
+        }
+        .menu-item:hover {
+            background-color: #374151;
+        }
+
+        .bottom-nav {
+            background-color: #212121;
+            padding: 4px 8px;
+        }
+        .nav-item {
+            color: #9e9e9e;
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-item.nav-active {
+            color: #14b8a6;
+        }
+        .nav-home-button {
+             background-color: #14b8a6;
+             color: white;
+             transform: translateY(-16px);
+             box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
+        }
+        .dashboard-card {
+            background-color: #1f2937;
+        }
+
+        .study-mode-card {
+            background-color: #2a2a2a;
+            border: 1px solid #424242;
+            transition: all 0.2s ease;
+        }
+        .study-mode-card.active, .study-mode-card:hover {
+            border-color: #14b8a6;
+            background-color: #1f2937;
+        }
+        .study-mode-select {
+            background-color: #2a2a2a;
+            border: 1px solid #424242;
+        }
+
+        .selection-button {
+            background-image: linear-gradient(to right, #1e3a8a, #14b8a6);
+            transition: all 0.2s ease;
+            border: 1px solid #14b8a6;
+        }
+        .selection-button:hover {
+            box-shadow: 0 0 15px rgba(20, 184, 166, 0.4);
+            transform: scale(1.02);
+        }
+        .question-card {
+            background-color: #1f2937;
+        }
+        .question-tab-active {
+            border-bottom: 2px solid #14b8a6;
+            color: #14b8a6;
+        }
+        .question-tab-inactive {
+            color: #6b7280;
+        }
+        .quiz-option {
+            background-color: #2b3a4f;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .quiz-option:hover {
+            border-color: #14b8a6;
+        }
+        .quiz-option.selected {
+            border-color: #f59e0b;
+            background-color: #3e526d;
+        }
+        .quiz-option.correct {
+            border-color: #10b981;
+            background-color: #1f2937;
+        }
+        .quiz-option.incorrect {
+            border-color: #ef4444;
+            background-color: #1f2937;
+        }
+        .menu-item {
+            transition: background-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 1rem; /* space between icon and text */
+            color: #d1d5db;
+        }
+        .menu-item:hover {
+            background-color: #374151;
+            color: white;
+        }
+        .menu-item:hover svg {
+            color: white;
+        }
+        .menu-separator {
+            border-color: #374151;
+        }
+        .logout-button {
+            background-color: #14b8a6;
+            transition: background-color 0.2s ease;
+        }
+        .logout-button:hover {
+            background-color: #0d9488;
+        }
+        .bookmark-btn svg {
+            transition: all 0.2s ease-in-out;
+        }
+        .bookmark-btn.bookmarked svg {
+            fill: #f59e0b;
+            stroke: #f59e0b;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-white">
+
+<div id="svg-icon-defs" style="display: none;">
+    <svg id="icon-update-qbank" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M4 20h5v-5M20 4h-5v5"></path></svg>
+    <svg id="icon-own-notes" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+    <svg id="icon-gdrive" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+    <svg id="icon-mcq" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <svg id="icon-sort" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9M3 12h9m-9 4h13m0-4v8m0 0l-4-4m4 4l4-4"></path></svg>
+    <svg id="icon-ref-book" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+    <svg id="icon-validity" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <svg id="icon-checkmark" class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+</div>
+
+<div class="app-container flex flex-col h-full">
+
+    <div id="loading-screen" class="screen screen-visible absolute inset-0 flex flex-col items-center justify-center p-8 text-white text-center">
+        <svg class="animate-spin h-12 w-12 text-teal-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-lg text-gray-400">Loading your profile...</p>
+    </div>
+
+    <div id="year-selection-screen" class="screen screen-hidden absolute inset-0 flex flex-col items-center justify-center p-8 text-white text-center">
+        <div class="mb-8">
+            <svg class="w-24 h-24 mx-auto" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="48" stroke="#14b8a6" stroke-width="4"/>
+                <path d="M25 65V35L37.5 50L50 35V65" stroke="#14b8a6" stroke-width="5"/>
+                <path d="M58 50H72" stroke="#14b8a6" stroke-width="5" stroke-linecap="round"/>
+                <path d="M65 43V57" stroke="#14b8a6" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+        </div>
+        <div class="mb-10">
+            <h1 class="text-3xl font-bold mb-2 text-white">Welcome to MGR Q-Bank</h1>
+            <p class="text-gray-300 text-lg">Please select your academic year to get started.</p>
+        </div>
+        <div class="w-full max-w-xs space-y-5">
+            <button onclick="selectYear('1st Year')" class="selection-button w-full py-4 rounded-xl text-lg font-semibold shadow-lg">1st Year</button>
+            <button onclick="selectYear('2nd Year')" class="selection-button w-full py-4 rounded-xl text-lg font-semibold shadow-lg">2nd Year</button>
+            <button onclick="selectYear('3rd Year')" class="selection-button w-full py-4 rounded-xl text-lg font-semibold shadow-lg">3rd Year</button>
+            <button onclick="selectYear('Final Year')" class="selection-button w-full py-4 rounded-xl text-lg font-semibold shadow-lg">Final Year</button>
+        </div>
+    </div>
+
+    <div id="hub-screen" class="screen screen-hidden flex flex-col h-full">
+        <header class="p-4 flex items-center justify-between pt-10">
+            <button onclick="toggleMenu()" class="text-gray-400 p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
+            <h1 id="hub-title" class="text-xl font-bold">1st Year</h1>
+            <button class="text-gray-400 p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+        </header>
+
+        <main class="flex-grow p-4 overflow-y-auto">
+            <div id="content-home">
+                <div class="mb-6">
+                    <h2 id="welcome-message" class="text-2xl font-bold">Welcome back, User!</h2>
+                    <p class="text-gray-400">Let's start studying for today!</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="dashboard-card rounded-lg p-4 flex items-center">
+                        <div class="bg-blue-500/20 p-2 rounded-lg mr-4">
+                            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <p id="total-questions" class="text-2xl font-bold">0</p>
+                            <p class="text-sm text-gray-400">Total Questions</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-card rounded-lg p-4 flex items-center">
+                        <div class="bg-purple-500/20 p-2 rounded-lg mr-4">
+                            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        </div>
+                        <div>
+                            <p id="total-subjects" class="text-2xl font-bold">0</p>
+                            <p class="text-sm text-gray-400">Subjects</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card rounded-lg p-4 mb-6 cursor-pointer" onclick="showDetailedProgress()">
+                    <h3 class="font-bold mb-4">Study Progress</h3>
+                    <div class="flex items-center">
+                        <div class="relative w-24 h-24 mr-6">
+                            <svg id="progress-ring" class="w-full h-full" viewBox="0 0 100 100">
+                                <circle class="text-gray-700" stroke-width="10" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"></circle>
+                                <circle id="progress-ring-circle" class="text-teal-400" stroke-width="10" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" style="transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset 0.5s ease;"></circle>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <p id="progress-ring-text" class="text-3xl font-bold">0%</p>
+                            </div>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex justify-between text-sm mb-2"><p class="text-gray-400">Questions Completed:</p><p id="questions-completed" class="font-semibold">0</p></div>
+                            <div class="flex justify-between text-sm mb-2"><p class="text-gray-400">Questions Remaining:</p><p id="questions-remaining" class="font-semibold">0</p></div>
+                            <div class="flex justify-between text-sm"><p class="text-gray-400">Today's Study Time:</p><p class="font-semibold">1h 45m</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card rounded-lg p-4">
+                    <h3 class="font-bold mb-4">Recent Activity</h3>
+                    <div id="recent-activity-container" class="space-y-4">
+                        <p class="text-sm text-gray-500">No recent activity yet.</p>
+                    </div>
+                </div>
+            </div>
+            <div id="content-qbank" class="hidden">
+                <div class="flex justify-between items-center mb-4"><h2 class="text-lg font-semibold text-gray-400">Select a Subject</h2></div>
+                <div id="subjects-container" class="space-y-4"></div>
+            </div>
+            <div id="content-study" class="hidden">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold">Study Mode</h2>
+                    <p class="text-gray-400">Choose your study preferences and start learning</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-6 text-center">
+                    <div id="mode-practice" class="study-mode-card active rounded-lg p-4 cursor-pointer" onclick="selectStudyMode('practice')">
+                        <p class="font-bold">Practice Mode</p>
+                        <p class="text-xs text-gray-400 mt-1">Random MCQs</p>
+                    </div>
+                    <div id="mode-subject" class="study-mode-card rounded-lg p-4 cursor-pointer" onclick="selectStudyMode('subject')">
+                        <p class="font-bold">Subject-wise</p>
+                        <p class="text-xs text-gray-400 mt-1">Focus on a subject</p>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <select id="study-subject-filter" class="study-mode-select w-full p-3 rounded-lg"><option value="all">All Subjects</option></select>
+                    <select id="study-chapter-filter" class="study-mode-select w-full p-3 rounded-lg"><option value="all">All Chapters</option></select>
+                    <select id="study-questions-filter" class="study-mode-select w-full p-3 rounded-lg">
+                        <option>5 Questions</option>
+                        <option>10 Questions</option>
+                        <option>25 Questions</option>
+                    </select>
+                </div>
+                <button class="w-full bg-teal-500 text-white font-bold p-4 rounded-lg mt-6 selection-button" onclick="startStudySession()">Start Studying</button>
+            </div>
+            <div id="content-bookmarks" class="hidden p-4">
+            </div>
+            <div id="content-profile" class="hidden">
+                <div class="p-4">
+                    <div class="flex flex-col items-center">
+                        <div class="relative">
+                            <img id="profile-picture" src="https://placehold.co/128x128/1f2937/a0aec0?text=User" class="w-32 h-32 rounded-full object-cover border-4 border-teal-500">
+                            <label for="profile-upload" class="absolute bottom-0 right-0 bg-gray-700 p-2 rounded-full cursor-pointer hover:bg-gray-600">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </label>
+                            <input type="file" id="profile-upload" class="hidden" accept="image/*" onchange="handleProfilePictureChange(event)">
+                        </div>
+                        <input id="profile-name" type="text" class="w-full max-w-xs bg-gray-800 text-white text-center mt-4 p-2 rounded-lg border border-gray-700 focus:outline-none focus:border-teal-500" value="Your Name" onblur="saveUserName()">
+                        <p id="profile-year" class="text-gray-400 mt-2"></p>
+                        <input id="profile-contact" type="text" class="w-full max-w-xs bg-gray-800 text-gray-400 text-center mt-1 p-2 rounded-lg border border-gray-700 focus:outline-none focus:border-teal-500" value="+91 00000 00000">
+
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bottom-nav flex justify-around items-center">
+            <button id="nav-qbank" onclick="switchTab('qbank')" class="nav-item flex-grow flex flex-col items-center justify-center p-2">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="text-xs font-medium">Q-Bank</span>
+            </button>
+            <button id="nav-study" onclick="switchTab('study')" class="nav-item flex-grow flex flex-col items-center justify-center p-2">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                <span class="text-xs font-medium">Study Mode</span>
+            </button>
+            <button id="nav-home" onclick="switchTab('home')" class="nav-home-button flex-grow flex flex-col items-center justify-center w-16 h-16 rounded-full">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+            </button>
+            <button id="nav-bookmarks" onclick="switchTab('bookmarks')" class="nav-item flex-grow flex flex-col items-center justify-center p-2">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                <span class="text-xs font-medium">Bookmarks</span>
+            </button>
+            <button id="nav-profile" onclick="switchTab('profile')" class="nav-item flex-grow flex flex-col items-center justify-center p-2">
+                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <span class="text-xs font-medium">Profile</span>
+            </button>
+        </footer>
+    </div>
+
+    <div id="paper-selection-screen" class="screen screen-hidden absolute inset-0 flex flex-col text-white">
+        <header class="p-4 flex items-center pt-10">
+            <button onclick="goBackToHub()" class="p-2 text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <h1 id="paper-selection-title" class="text-xl font-bold text-center flex-grow">Anatomy</h1>
+            <div class="w-10"></div> </header>
+        <main class="flex-grow p-8 flex flex-col items-center justify-center space-y-6">
+            <div class="w-full max-w-xs"><div onclick="selectPaper(1)" class="selection-button rounded-lg p-6 text-center text-xl font-bold cursor-pointer">Paper 1</div></div>
+            <div class="w-full max-w-xs"><div onclick="selectPaper(2)" class="selection-button rounded-lg p-6 text-center text-xl font-bold cursor-pointer">Paper 2</div></div>
+        </main>
+    </div>
+
+    <div id="detailed-progress-screen" class="screen screen-hidden absolute inset-0 flex flex-col text-white">
+        <header class="p-4 flex items-center pt-10">
+            <button onclick="goBackToHub()" class="p-2 text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <h1 class="text-xl font-bold text-center flex-grow">Detailed Progress</h1>
+            <div class="w-10"></div> </header>
+        <main class="flex-grow p-4 overflow-y-auto">
+            <div id="detailed-subjects-container" class="space-y-4">
+            </div>
+        </main>
+    </div>
+
+    <div id="chapter-selection-screen" class="screen screen-hidden absolute inset-0 flex flex-col text-white">
+        <header class="p-4 flex items-center pt-10">
+            <button id="chapter-back-button" class="p-2 text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <h1 id="chapter-selection-title" class="text-xl font-bold text-center flex-grow">Chapters</h1>
+            <div class="w-10"></div> </header>
+        <main class="flex-grow p-4 overflow-y-auto">
+            <div id="chapters-container" class="space-y-3">
+            </div>
+        </main>
+    </div>
+
+    <div id="question-view-screen" class="screen screen-hidden absolute inset-0 flex flex-col text-white">
+        <header class="p-4 flex items-center pt-10">
+            <button onclick="goBackToChapters()" class="p-2 text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <h1 id="question-view-title" class="text-xl font-bold text-center flex-grow"></h1>
+            <div class="w-10"></div> </header>
+        <div class="flex border-b border-gray-700 mx-4">
+            <button id="question-tab-essay" onclick="switchQuestionTab('Essay')" class="flex-1 py-3 text-center font-semibold question-tab-active">Essay</button>
+            <button id="question-tab-short-note" onclick="switchQuestionTab('Short Note')" class="flex-1 py-3 text-center font-semibold question-tab-inactive">Short Note</button>
+            <button id="question-tab-mcq" onclick="switchQuestionTab('MCQ')" class="flex-1 py-3 text-center font-semibold question-tab-inactive">MCQ</button>
+        </div>
+        <main class="flex-grow p-4 overflow-y-auto">
+            <div class="flex justify-end mb-4">
+                <select id="filter-select" class="bg-gray-700 text-white rounded-md p-2 text-sm">
+                    <option value="most">Most Repeated</option>
+                    <option value="least">Least Repeated</option>
+                </select>
+            </div>
+            <div id="questions-container" class="space-y-4">
+            </div>
+        </main>
+    </div>
+
+    <div id="quiz-screen" class="screen screen-hidden absolute inset-0 flex flex-col text-white p-4 pt-10">
+        <header class="flex items-center justify-between mb-4">
+            <h1 class="text-xl font-bold">Study Session</h1>
+            <button onclick="goBackToHubFromQuiz()" class="flex items-center text-red-400 hover:text-red-300 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg><span class="ml-1 text-lg">End</span></button>
+        </header>
+        <div class="mb-4">
+            <div class="flex justify-between text-sm text-gray-400 mb-1">
+                <span>Progress</span>
+                <span id="quiz-progress-text">Question 1/10</span>
+            </div>
+            <div class="progress-bar-bg w-full rounded-full h-2.5">
+                <div id="quiz-progress-bar" class="progress-bar-fill h-2.5 rounded-full" style="width: 10%"></div>
+            </div>
+        </div>
+        <main id="quiz-content" class="flex-grow flex flex-col justify-center">
+            <div class="question-card rounded-lg p-6 mb-6">
+                <p id="quiz-question-text" class="text-lg text-gray-200">What is the powerhouse of the cell?</p>
+            </div>
+            <div id="quiz-options-container" class="space-y-4">
+            </div>
+        </main>
+        <footer class="flex justify-between items-center mt-6">
+            <button onclick="prevQuestion()" id="quiz-prev-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">Previous</button>
+            <button onclick="nextQuestion()" id="quiz-next-btn" class="bg-teal-500 hover:bg-teal-400 text-white font-bold py-3 px-6 rounded-lg transition-colors">Next</button>
+        </footer>
+    </div>
+
+    <div id="quiz-results-screen" class="screen screen-hidden absolute inset-0 flex flex-col items-center justify-center text-white p-6">
+        <h1 class="text-3xl font-bold text-teal-400 mb-4">Session Complete!</h1>
+        <div class="dashboard-card rounded-lg p-8 w-full max-w-sm text-center">
+            <p class="text-gray-400 text-lg">Your Score</p>
+            <p id="quiz-score-text" class="text-6xl font-bold my-4">8/10</p>
+            <div class="flex justify-around">
+                <div>
+                    <p id="quiz-correct-answers" class="text-2xl font-semibold text-green-400">8</p>
+                    <p class="text-sm text-gray-500">Correct</p>
+                </div>
+                <div>
+                    <p id="quiz-incorrect-answers" class="text-2xl font-semibold text-red-400">2</p>
+                    <p class="text-sm text-gray-500">Incorrect</p>
+                </div>
+            </div>
+        </div>
+        <button onclick="goBackToHub()" class="selection-button w-full max-w-sm mt-8 py-4 rounded-xl text-lg font-semibold">Back to Hub</button>
+    </div>
+
+    <div id="premium-screen" class="screen screen-hidden absolute inset-0 flex flex-col text-white">
+        <header class="p-4 flex items-center pt-10">
+            <button onclick="goBackToHub()" class="p-2 text-gray-400 hover:text-white transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+            <h1 class="text-xl font-bold text-center flex-grow">Premium</h1>
+            <div class="w-10"></div> </header>
+        <main class="flex-grow p-4 overflow-y-auto">
+            <div class="bg-gray-800 rounded-lg p-4 mb-6">
+                <ul class="space-y-3 text-gray-300">
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div id="icon-container-update-qbank"></div>
+                            <span>Updated Q Bank upto (June 2025)</span>
+                        </div>
+                        <div id="icon-container-checkmark1"></div>
+                    </li>
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div id="icon-container-own-notes"></div>
+                            <span>Own Notes</span>
+                        </div>
+                        <div id="icon-container-checkmark2"></div>
+                    </li>
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div id="icon-container-gdrive"></div>
+                            <span>Google Drive Sync</span>
+                        </div>
+                        <div id="icon-container-checkmark3"></div>
+                    </li>
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div id="icon-container-mcq"></div>
+                            <span>University MCQs with Authentic answers</span>
+                        </div>
+                        <div id="icon-container-checkmark4"></div>
+                    </li>
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div id="icon-container-sort"></div>
+                            <span>Sorted by Topic, Repeated & Page number</span>
+                        </div>
+                        <div id="icon-container-checkmark5"></div>
+                    </li>
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div id="icon-container-ref-book"></div>
+                            <span>Ref. Book Page Number</span>
+                        </div>
+                        <div id="icon-container-checkmark6"></div>
+                    </li>
+                    <li class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div id="icon-container-validity"></div>
+                            <span>5 Year validity for each Premium purchase</span>
+                        </div>
+                        <div id="icon-container-checkmark7"></div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="space-y-4">
+                <div class="rounded-lg p-4 bg-gradient-to-r from-cyan-500 to-teal-600 shadow-lg">
+                    <p class="font-bold text-lg">2 YEARS COMBO</p>
+                    <div class="flex justify-between items-center mt-2">
+                        <div>
+                            <span class="text-3xl font-bold mr-2">₹ 499</span>
+                            <del class="text-gray-200">999</del>
+                        </div>
+                        <button onclick="initiatePayment(499, '2 Years Combo')" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-full transition-colors">PAY NOW</button>
+                    </div>
+                </div>
+                <div class="rounded-lg p-4 bg-gradient-to-r from-purple-600 to-indigo-700 shadow-lg">
+                    <p class="font-bold text-lg">BUY CURRENT YEAR</p>
+                    <p class="text-sm text-purple-200">2YEAR MBBS</p>
+                    <div class="flex justify-between items-center mt-2">
+                        <div>
+                            <span class="text-3xl font-bold mr-2">₹ 299</span>
+                            <del class="text-gray-200">599</del>
+                        </div>
+                        <button onclick="initiatePayment(299, 'Current Year - 2nd Year MBBS')" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-full transition-colors">PAY NOW</button>
+                    </div>
+                </div>
+                <div class="rounded-lg p-4 bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg">
+                    <p class="font-bold text-lg">3 YEARS COMBO</p>
+                    <div class="flex justify-between items-center mt-2">
+                        <div>
+                            <span class="text-3xl font-bold mr-2">₹ 699</span>
+                            <del class="text-gray-200">1399</del>
+                        </div>
+                        <button onclick="initiatePayment(699, '3 Years Combo')" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-full transition-colors">PAY NOW</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+    <div id="menu-overlay" class="menu-overlay absolute inset-0 z-30" onclick="toggleMenu()"></div>
+
+    <div id="side-menu" class="side-menu absolute top-0 left-0 h-full w-72 text-white z-40 flex flex-col p-6">
+        <div class="flex items-center justify-between mb-8 pt-6">
+            <h2 class="text-2xl font-bold">Menu</h2>
+        </div>
+        <nav class="flex flex-col flex-grow">
+            <div class="space-y-2">
+                <a href="#" onclick="switchTab('home'); toggleMenu();" class="menu-item p-3 rounded-lg text-lg font-medium">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span>Home</span>
+                </a>
+                <a href="#" onclick="switchTab('profile'); toggleMenu();" class="menu-item p-3 rounded-lg text-lg font-medium">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <span>My Profile</span>
+                </a>
+                <a href="#" class="menu-item p-3 rounded-lg text-lg font-medium" onclick="showPremium()">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                    <span>Premium</span>
+                </a>
+            </div>
+
+            <hr class="menu-separator my-4">
+
+            <div class="space-y-2">
+                <a href="#" onclick="goBackToYearSelection()" class="menu-item p-3 rounded-lg text-lg font-medium">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>Change Year</span>
+                </a>
+                <a href="#" onclick="showDetailedProgress(); toggleMenu();" class="menu-item p-3 rounded-lg text-lg font-medium">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <span>Progress Check</span>
+                </a>
+                <a href="#" class="menu-item p-3 rounded-lg text-lg font-medium" onclick="shareApp()">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg>
+                    <span>Share with friends</span>
+                </a>
+                <a href="#" class="menu-item p-3 rounded-lg text-lg font-medium" onclick="updateQBank()">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span>Update Q bank</span>
+                </a>
+                <a href="#" class="menu-item p-3 rounded-lg text-lg font-medium" onclick="resetHistory()">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"></path></svg>
+                    <span>Reset history</span>
+                </a>
+            </div>
+
+            <div class="mt-auto">
+                <a href="#" class="logout-button block text-center p-3 rounded-full text-lg font-semibold" onclick="logoutUser()">Logout</a>
+            </div>
+        </nav>
+    </div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDLu2OLWj-6WDGqE1rpU1eMwlV80ruQduI",
+        authDomain: "mgr-qbank-app.firebaseapp.com",
+        projectId: "mgr-qbank-app",
+        storageBucket: "mgr-qbank-app.appspot.com",
+        messagingSenderId: "46581470828",
+        appId: "1:46581470828:web:7a7a8b0ddad108ac126a49"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    let userId = null;
+    let localSubjectsData = {};
+    let currentQuestions = [];
+    let completedQuestions = {};
+    let bookmarkedQuestions = {};
+    let recentActivities = [];
+    let quizState = {};
+    let currentUserData = {};
+    let currentYear = '1st Year';
+    let currentChapter = '';
+    let currentBackTarget = 'hub';
+    let currentScreenId = 'loading-screen';
+
+    // Screen elements
+    const loadingScreen = document.getElementById('loading-screen');
+    const yearScreen = document.getElementById('year-selection-screen');
+    const hubScreen = document.getElementById('hub-screen');
+    const paperScreen = document.getElementById('paper-selection-screen');
+    const detailedProgressScreen = document.getElementById('detailed-progress-screen');
+    const chapterScreen = document.getElementById('chapter-selection-screen');
+    const questionViewScreen = document.getElementById('question-view-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const quizResultsScreen = document.getElementById('quiz-results-screen');
+    const premiumScreen = document.getElementById('premium-screen');
+
+    // Dynamic elements
+    const hubTitle = document.getElementById('hub-title');
+    const paperTitle = document.getElementById('paper-selection-title');
+    const chapterTitle = document.getElementById('chapter-selection-title');
+    const questionViewTitle = document.getElementById('question-view-title');
+    const subjectsContainer = document.getElementById('subjects-container');
+    const chaptersContainer = document.getElementById('chapters-container');
+    const questionsContainer = document.getElementById('questions-container');
+    let currentSubject = '';
+    const contentHome = document.getElementById('content-home');
+    const sideMenu = document.getElementById('side-menu');
+    const menuOverlay = document.getElementById('menu-overlay');
+
+    function formatTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " years ago";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " months ago";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " days ago";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " hours ago";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " minutes ago";
+        return "Just now";
+    }
+
+    function renderRecentActivity() {
+        const container = document.getElementById('recent-activity-container');
+        if (!recentActivities || recentActivities.length === 0) {
+            container.innerHTML = `<p class="text-sm text-gray-500">No recent activity yet.</p>`;
+            return;
+        }
+
+        container.innerHTML = recentActivities.map(activity => {
+            const iconHTML = activity.type === 'bookmark'
+                ? `<div class="bg-orange-500/20 p-2 rounded-full mr-3"><svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg></div>`
+                : `<div class="bg-green-500/20 p-2 rounded-full mr-3"><svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>`;
+
+            return `
+                <div class="flex items-center">
+                    ${iconHTML}
+                    <p class="text-sm text-gray-300">${activity.message} <span class="text-gray-500 ml-2">${formatTimeAgo(new Date(activity.timestamp))}</span></p>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function logActivity(message, type) {
+        if (!userId) return;
+
+        const newActivity = {
+            message: message,
+            type: type, // 'bookmark' or 'complete'
+            timestamp: new Date().toISOString()
+        };
+
+        recentActivities.unshift(newActivity);
+        recentActivities = recentActivities.slice(0, 5);
+
+        renderRecentActivity();
+
+        const userDocRef = doc(db, "users", userId);
+        try {
+            await setDoc(userDocRef, { recentActivities: recentActivities }, { merge: true });
+        } catch (e) {
+            console.error("Error logging activity: ", e);
+        }
+    }
+
+    window.toggleBookmark = async (questionId) => {
+        const button = document.getElementById(`bookmark-btn-${questionId}`);
+        if (!button) return;
+
+        const questionText = document.querySelector(`label[for="${questionId}"]`).textContent.substring(0, 20) + '...';
+
+        if (bookmarkedQuestions[questionId]) {
+            delete bookmarkedQuestions[questionId];
+            button.classList.remove('bookmarked');
+            logActivity(`Un-bookmarked "${questionText}"`, 'bookmark');
+        } else {
+            bookmarkedQuestions[questionId] = true;
+            button.classList.add('bookmarked');
+            logActivity(`Bookmarked "${questionText}"`, 'bookmark');
+        }
+
+        if (userId) {
+            const userDocRef = doc(db, "users", userId);
+            try {
+                await setDoc(userDocRef, { bookmarkedQuestions: bookmarkedQuestions }, { merge: true });
+            } catch (error) {
+                console.error("Error saving bookmarks:", error);
+            }
+        }
+    }
+
+    async function renderBookmarks() {
+        const container = document.getElementById('content-bookmarks');
+        if (Object.keys(bookmarkedQuestions).length === 0) {
+            container.innerHTML = `<p class="text-center mt-10 text-gray-400">You haven't bookmarked any questions yet.</p>`;
+            return;
+        }
+
+        container.innerHTML = `<div class="space-y-4"></div>`;
+        const bookmarkListContainer = container.querySelector('div');
+
+        let fullBookmarkDetails = [];
+        const subjects = localSubjectsData[currentYear] || [];
+
+        subjects.forEach(subject => {
+            const chapters = subject.chapters || Object.values(subject.papers).flatMap(p => p.chapters);
+            chapters.forEach(chapter => {
+                if (chapter.questions) {
+                    chapter.questions.forEach(q => {
+                        const questionId = `${subject.subjectName}-${chapter.chapterName}-${q.questionText}`.replace(/[^\w-]/g, '');
+                        if (bookmarkedQuestions[questionId]) {
+                            fullBookmarkDetails.push({
+                                ...q,
+                                id: questionId,
+                                subjectName: subject.subjectName,
+                                chapterName: chapter.chapterName
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        if (fullBookmarkDetails.length === 0) {
+             container.innerHTML = `<p class="text-center mt-10 text-gray-400">Your bookmarks are for a different academic year.</p>`;
+             return;
+        }
+
+        bookmarkListContainer.innerHTML = fullBookmarkDetails.map(q => {
+            return `
+                <div class="question-card rounded-lg p-4">
+                    <p class="text-gray-300 mb-2">${q.questionText}</p>
+                    <div class="flex items-center justify-between mt-3 text-xs text-gray-400">
+                        <span class="bg-gray-700 text-gray-300 px-2 py-1 rounded-md font-semibold">${q.subjectName} / ${q.chapterName}</span>
+                        <button onclick="toggleBookmark('${q.id}'); renderBookmarks();" class="bookmark-btn bookmarked p-2 text-orange-400">
+                            <svg class="w-6 h-6" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    window.showPremium = () => {
+        toggleMenu();
+        showScreen(premiumScreen);
+    }
+
+    function showScreen(screenToShow) {
+        [loadingScreen, yearScreen, hubScreen, paperScreen, detailedProgressScreen, chapterScreen, questionViewScreen, quizScreen, quizResultsScreen, premiumScreen].forEach(screen => {
+            if (screen) {
+                screen.classList.toggle('screen-visible', screen === screenToShow);
+                screen.classList.toggle('screen-hidden', screen !== screenToShow);
+            }
+        });
+        currentScreenId = screenToShow.id; // <-- ADD THIS LINE
+    }
+
+    window.shareApp = () => {
+        const shareText = 'Check out this awesome question bank app for MGR University students!';
+        if (window.AndroidInterface && typeof window.AndroidInterface.shareText === 'function') {
+            window.AndroidInterface.shareText(shareText);
+        } else {
+            const shareData = {
+                title: 'MGR Q-Bank App',
+                text: shareText,
+                url: window.location.href
+            };
+            if (navigator.share) {
+                navigator.share(shareData)
+                    .then(() => console.log('App shared successfully!'))
+                    .catch(err => console.error('Error sharing:', err));
+            } else {
+                alert('Share feature is not available on this device.');
+            }
+        }
+        toggleMenu();
+    }
+    window.handleNativeBack = () => {
+    console.log("Android back button was pressed! Current screen is:", currentScreenId);
+        // First, check if the side menu is open and close it if it is
+        if (sideMenu.classList.contains('menu-open')) {
+            toggleMenu();
+            return;
+        }
+
+        // Navigate back based on which screen is currently showing
+        switch (currentScreenId) {
+            case 'question-view-screen':
+                goBackToChapters();
+                break;
+            case 'chapter-selection-screen':
+                document.getElementById('chapter-back-button').click(); // Use the existing back logic
+                break;
+            case 'paper-selection-screen':
+            case 'detailed-progress-screen':
+            case 'premium-screen':
+            case 'quiz-results-screen':
+                goBackToHub();
+                break;
+            case 'quiz-screen':
+                goBackToHubFromQuiz();
+                break;
+            case 'hub-screen':
+            case 'year-selection-screen':
+            case 'login-screen':
+                // If on a main screen, tell the native app to exit
+                if (window.AndroidInterface && window.AndroidInterface.closeApp) {
+                    window.AndroidInterface.closeApp();
+                }
+                break;
+            default:
+                // As a fallback, try to go to the hub screen
+                goBackToHub();
+                break;
+        }
+    };
+    window.updateQBank = () => {
+        toggleMenu();
+        alert("Checking for updates...");
+        displayHubForYear(currentYear);
+        alert("Question bank is now up to date!");
+    }
+
+    window.resetHistory = async () => {
+        const isConfirmed = confirm("Are you sure you want to reset all your progress? This action cannot be undone.");
+        if (isConfirmed) {
+            completedQuestions = {};
+            if (userId) {
+                const userDocRef = doc(db, "users", userId);
+                try {
+                    await setDoc(userDocRef, { completedQuestions: {} }, { merge: true });
+                    alert("Your history has been reset.");
+                    updateDashboardMetrics();
+                    updateSubjectCards();
+                } catch (e) {
+                    console.error("Error resetting history: ", e);
+                    alert("Failed to reset history. Please try again.");
+                }
+            }
+        }
+        toggleMenu();
+    }
+
+    window.logoutUser = () => {
+        toggleMenu();
+        auth.signOut().then(() => {
+            console.log('User signed out');
+            userId = null;
+            localSubjectsData = {};
+            completedQuestions = {};
+            bookmarkedQuestions = {};
+            recentActivities = [];
+            showScreen(yearScreen);
+        }).catch((error) => {
+            console.error('Sign out error', error);
+        });
+    }
+
+    window.saveUserName = async () => {
+        const nameInput = document.getElementById('profile-name');
+        const newName = nameInput.value.trim();
+        if (!userId || !newName) return;
+        const userDocRef = doc(db, "users", userId);
+        try {
+            await setDoc(userDocRef, { name: newName }, { merge: true });
+            console.log("User name saved!");
+        } catch (e) {
+            console.error("Error saving user name: ", e);
+        }
+    }
+
+    window.selectYear = async (year) => {
+         if (!userId) {
+            const toast = document.createElement('div');
+            toast.textContent = 'Authenticating... please wait.';
+            toast.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+            return;
+         }
+        const userDocRef = doc(db, "users", userId);
+        try {
+            await setDoc(userDocRef, { selectedYear: year }, { merge: true });
+            console.log("User year preference saved!");
+        } catch (e) {
+            console.error("Error writing document: ", e);
+        }
+        displayHubForYear(year);
+    }
+
+    async function displayHubForYear(year) {
+        currentYear = year;
+        hubTitle.textContent = year;
+
+        subjectsContainer.innerHTML = `<p class="text-center text-gray-400">Loading subjects...</p>`;
+        showScreen(hubScreen);
+        switchTab('home');
+
+        const yearId = year.toLowerCase().replace(' ', '_');
+        const subjectsColRef = collection(db, 'years', yearId, 'subjects');
+
+        try {
+            const subjectSnapshot = await getDocs(subjectsColRef);
+            localSubjectsData[year] = [];
+            subjectsContainer.innerHTML = '';
+
+            if (subjectSnapshot.empty) {
+                subjectsContainer.innerHTML = `<p class="text-center text-gray-400">No subjects found for this year in the database.</p>`;
+                return;
+            }
+
+            subjectSnapshot.forEach(doc => {
+                const subject = { id: doc.id, ...doc.data() };
+                localSubjectsData[year].push(subject);
+            });
+            updateSubjectCards();
+            updateDashboardMetrics();
+        } catch (error)
+        {
+            console.error("Error fetching subjects: ", error);
+            subjectsContainer.innerHTML = `<p class="text-center text-red-400">Failed to load subjects. Check console.</p>`;
+        }
+    }
+
+    function updateSubjectCards() {
+        subjectsContainer.innerHTML = '';
+        const currentSubjects = localSubjectsData[currentYear] || [];
+        currentSubjects.forEach(subject => {
+             const subjectProgress = calculateSubjectProgress(subject.subjectName);
+             subjectsContainer.innerHTML += `
+                <div class="subject-card rounded-lg p-4 flex items-center justify-between cursor-pointer" onclick="selectSubject('${subject.subjectName}')">
+                    <div class="flex items-center">
+                        <div>
+                            <h3 class="font-bold text-lg text-white">${subject.subjectName}</h3>
+                            <div class="progress-bar-bg w-full rounded-full h-2 mt-2">
+                                <div class="progress-bar-fill h-2 rounded-full" style="width: ${subjectProgress.percentage}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right ml-4">
+                       <p class="font-bold text-white">${subjectProgress.completed} / ${subjectProgress.total}</p>
+                       <p class="text-xs text-gray-400">Completed</p>
+                    </div>
+                </div>`;
+        });
+    }
+
+    window.selectSubject = (subjectName) => {
+        currentSubject = subjectName;
+        const subject = localSubjectsData[currentYear]?.find(s => s.subjectName === subjectName);
+        if (subject && subject.chapters) {
+            populateAndShowChapters(subject.subjectName, subject.chapters, 'hub');
+        } else {
+            paperTitle.textContent = subjectName;
+            showScreen(paperScreen);
+        }
+    }
+
+    window.selectPaper = (paperNumber) => {
+        const subject = localSubjectsData[currentYear]?.find(s => s.subjectName === currentSubject);
+        if (subject && subject.papers) {
+            const chapters = subject.papers[`Paper ${paperNumber}`];
+            if (chapters) {
+                populateAndShowChapters(`${subject.subjectName} - Paper ${paperNumber}`, chapters.chapters, 'paper');
+            }
+        }
+    }
+
+    function populateAndShowChapters(title, chapters, backTarget) {
+        chapterTitle.textContent = title;
+        chaptersContainer.innerHTML = '';
+        currentBackTarget = backTarget;
+        chapters.forEach(chapter => {
+            chaptersContainer.innerHTML += `
+            <div class="selection-button rounded-lg p-4 text-white font-semibold cursor-pointer flex items-center" onclick="selectChapter('${chapter.chapterName || chapter}')">
+               <span class="ml-4">${chapter.chapterName || chapter}</span>
+            </div>`;
+        });
+        const backButton = document.getElementById('chapter-back-button');
+        backButton.onclick = backTarget === 'hub' ? () => showScreen(hubScreen) : () => showScreen(paperScreen);
+        showScreen(chapterScreen);
+    }
+
+    window.selectChapter = (chapterName) => {
+        currentChapter = chapterName;
+        const subject = localSubjectsData[currentYear]?.find(s => s.subjectName === currentSubject);
+        if (!subject) return;
+        let chapterData;
+        if (subject.chapters) {
+            chapterData = subject.chapters.find(c => c.chapterName === chapterName);
+        } else if (subject.papers) {
+             for (const paperKey in subject.papers) {
+                const paper = subject.papers[paperKey];
+                const foundChapter = paper.chapters.find(c => c.chapterName === chapterName);
+                if (foundChapter) { chapterData = foundChapter; break; }
+            }
+        }
+        currentQuestions = chapterData ? chapterData.questions || [] : [];
+        showQuestionViewScreen(chapterName);
+    }
+
+    function showQuestionViewScreen(title) {
+        questionViewTitle.textContent = title;
+        switchQuestionTab('Essay');
+        document.getElementById('filter-select').value = 'most';
+        showScreen(questionViewScreen);
+    }
+
+    window.switchQuestionTab = (type) => {
+        document.querySelectorAll('#question-view-screen .flex button').forEach(btn => {
+            btn.classList.add('question-tab-inactive');
+            btn.classList.remove('question-tab-active');
+        });
+        document.getElementById(`question-tab-${type.toLowerCase().replace(' ', '-')}`).classList.add('question-tab-active');
+        renderQuestions(type);
+    }
+
+    function renderQuestions(type) {
+        let filteredQuestions = currentQuestions.filter(q => q.questionType === type);
+        const filterValue = document.getElementById('filter-select').value;
+        if (filterValue === 'most') {
+            filteredQuestions.sort((a, b) => (b.repeated || 0) - (a.repeated || 0));
+        } else {
+            filteredQuestions.sort((a, b) => (a.repeated || 0) - (b.repeated || 0));
+        }
+        questionsContainer.innerHTML = '';
+        if (filteredQuestions.length === 0) {
+            questionsContainer.innerHTML = `<p class="text-center text-gray-400">No questions of this type found.</p>`;
+            return;
+        }
+        filteredQuestions.forEach(q => {
+            const questionId = `${currentSubject}-${currentChapter}-${q.questionText}`.replace(/[^\w-]/g, '');
+            const isChecked = completedQuestions[questionId] ? 'checked' : '';
+            const isBookmarked = bookmarkedQuestions[questionId] ? 'bookmarked' : '';
+            const bookmarkButtonHTML = `
+                <button id="bookmark-btn-${questionId}" onclick="toggleBookmark('${questionId}')" class="bookmark-btn p-2 text-gray-500 hover:text-orange-400 ${isBookmarked}">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                    </svg>
+                </button>
+            `;
+
+            questionsContainer.innerHTML += `
+                <div class="question-card rounded-lg p-4 flex items-start">
+                    <input type="checkbox" id="${questionId}" class="h-6 w-6 rounded bg-gray-700 border-gray-600 text-teal-500 focus:ring-teal-500 mt-1" onchange="toggleQuestionComplete('${questionId}')" ${isChecked}>
+                    <div class="ml-4 flex-1">
+                        <label for="${questionId}" class="text-gray-300">${q.questionText}</label>
+                        ${q.options ? `<div class="mt-2 text-sm text-gray-400 space-y-1">${q.options.map(o => `<div>- ${o}</div>`).join('')}</div>` : ''}
+                        <div class="flex items-center justify-between mt-3 text-xs text-gray-400">
+                            <span class="font-bold text-orange-400">Repeated: ${q.repeated || 0} times</span>
+                            ${bookmarkButtonHTML}
+                        </div>
+                    </div>
+                </div>`;
+        });
+    }
+
+    document.getElementById('filter-select').addEventListener('change', () => {
+         const activeTab = document.querySelector('.question-tab-active').textContent;
+         renderQuestions(activeTab);
+    });
+
+    window.toggleQuestionComplete = async (questionId) => {
+         const isChecked = document.getElementById(questionId).checked;
+         completedQuestions[questionId] = isChecked;
+
+         if(isChecked){
+            const questionText = document.querySelector(`label[for="${questionId}"]`).textContent.substring(0, 20) + '...';
+            logActivity(`Completed "${questionText}"`, 'complete');
+         }
+
+         if (userId) {
+            const userDocRef = doc(db, "users", userId);
+            try {
+                await setDoc(userDocRef, { completedQuestions: completedQuestions }, { merge: true });
+            } catch (error) {
+                console.error("Error saving progress:", error);
+            }
+         }
+         updateDashboardMetrics();
+         updateSubjectCards();
+    }
+
+    function calculateSubjectProgress(subjectName) {
+        const subject = localSubjectsData[currentYear]?.find(s => s.subjectName === subjectName);
+        if (!subject) return { total: 0, completed: 0, percentage: 0 };
+        let totalQuestions = 0;
+        const chapters = subject.chapters || (subject.papers ? Object.values(subject.papers).flatMap(p => p.chapters) : []);
+        if (chapters) {
+            chapters.forEach(c => {
+                if(c.questions) totalQuestions += c.questions.length
+            });
+        }
+        let completedCount = 0;
+        for (const id in completedQuestions) {
+            if (id.startsWith(subjectName.replace(/\s/g, '')) && completedQuestions[id]) {
+                completedCount++;
+            }
+        }
+        const percentage = totalQuestions > 0 ? Math.round((completedCount / totalQuestions) * 100) : 0;
+        return { total: totalQuestions, completed: completedCount, percentage: percentage };
+    }
+
+    function updateDashboardMetrics() {
+        let totalQuestionsInYear = 0;
+        let totalCompletedInYear = 0;
+        const currentSubjects = localSubjectsData[currentYear] || [];
+        document.getElementById('total-subjects').textContent = currentSubjects.length;
+        currentSubjects.forEach(subject => {
+            const progress = calculateSubjectProgress(subject.subjectName);
+            totalQuestionsInYear += progress.total;
+            totalCompletedInYear += progress.completed;
+        });
+        document.getElementById('total-questions').textContent = totalQuestionsInYear.toLocaleString();
+        document.getElementById('questions-completed').textContent = totalCompletedInYear;
+        document.getElementById('questions-remaining').textContent = (totalQuestionsInYear - totalCompletedInYear).toLocaleString();
+        const overallPercentage = totalQuestionsInYear > 0 ? Math.round((totalCompletedInYear / totalQuestionsInYear) * 100) : 0;
+        document.getElementById('progress-ring-text').textContent = `${overallPercentage}%`;
+        const circumference = 2 * Math.PI * 40;
+        const offset = circumference - (overallPercentage / 100) * circumference;
+        document.getElementById('progress-ring-circle').style.strokeDashoffset = offset;
+    }
+
+
+    window.goBackToHub = () => showScreen(hubScreen);
+    window.goBackToChapters = () => {
+         const backTargetScreen = currentBackTarget === 'hub' ? hubScreen : paperScreen;
+         showScreen(backTargetScreen);
+    }
+    window.goBackToHubFromQuiz = () => showScreen(hubScreen);
+    window.goBackToYearSelection = () => {
+        toggleMenu();
+        setTimeout(() => showScreen(yearScreen), 300);
+    }
+
+    window.showDetailedProgress = () => {
+        const container = document.getElementById('detailed-subjects-container');
+        container.innerHTML = '';
+        const currentSubjects = localSubjectsData[currentYear] || [];
+        currentSubjects.forEach(subject => {
+             const progress = calculateSubjectProgress(subject.subjectName);
+             container.innerHTML += `
+                <div class="dashboard-card rounded-lg p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-white">${subject.subjectName}</span>
+                        <span class="text-sm text-gray-400">${progress.completed} / ${progress.total}</span>
+                    </div>
+                    <div class="progress-bar-bg w-full rounded-full h-2.5">
+                        <div class="progress-bar-fill h-2.5 rounded-full" style="width: ${progress.percentage}%"></div>
+                    </div>
+                </div>`;
+        });
+        showScreen(detailedProgressScreen);
+    }
+
+    window.selectStudyMode = (mode) => {
+        document.querySelectorAll('.study-mode-card').forEach(m => m.classList.remove('active'));
+        document.getElementById(`mode-${mode}`).classList.add('active');
+    }
+
+    window.switchTab = (tabName) => {
+        document.querySelectorAll('.bottom-nav button').forEach(item => {
+            item.classList.remove('nav-active');
+            if(item.id !== 'nav-home') item.classList.add('nav-item');
+        });
+        const activeNav = document.getElementById(`nav-${tabName}`);
+        if (activeNav && activeNav.id !== 'nav-home') activeNav.classList.add('nav-active');
+
+        document.querySelectorAll('#hub-screen main > div').forEach(content => content.classList.add('hidden'));
+        const activeContent = document.getElementById(`content-${tabName}`);
+        if (activeContent) {
+            activeContent.classList.remove('hidden');
+            if(tabName === 'study') populateStudyModeFilters();
+            if(tabName === 'profile') populateProfileScreen();
+            if(tabName === 'bookmarks') renderBookmarks();
+        }
+        else contentHome.classList.remove('hidden');
+    }
+
+    function populateProfileScreen() {
+        document.getElementById('profile-year').textContent = currentYear;
+    }
+
+    window.handleProfilePictureChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('profile-picture').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function populateStudyModeFilters() {
+        const subjectFilter = document.getElementById('study-subject-filter');
+        const chapterFilter = document.getElementById('study-chapter-filter');
+        subjectFilter.innerHTML = '<option value="all">All Subjects</option>';
+        chapterFilter.innerHTML = '<option value="all">All Chapters</option>';
+
+        const subjects = localSubjectsData[currentYear] || [];
+        subjects.forEach(s => {
+            subjectFilter.innerHTML += `<option value="${s.subjectName}">${s.subjectName}</option>`;
+        });
+
+        subjectFilter.onchange = () => {
+            const selectedSubject = subjectFilter.value;
+            chapterFilter.innerHTML = '<option value="all">All Chapters</option>';
+            if (selectedSubject !== 'all') {
+                const subjectData = subjects.find(s => s.subjectName === selectedSubject);
+                if (subjectData) {
+                     const chapters = subjectData.chapters || Object.values(subjectData.papers).flatMap(p => p.chapters);
+                     chapters.forEach(c => {
+                         chapterFilter.innerHTML += `<option value="${c.chapterName}">${c.chapterName}</option>`;
+                     });
+                }
+            }
+        };
+    }
+
+    window.startStudySession = () => {
+        const subjectFilter = document.getElementById('study-subject-filter').value;
+        const chapterFilter = document.getElementById('study-chapter-filter').value;
+        const numQuestions = parseInt(document.getElementById('study-questions-filter').value);
+        let allQuestions = [];
+        const subjectsToSearch = subjectFilter === 'all' ? (localSubjectsData[currentYear] || []) : (localSubjectsData[currentYear] || []).filter(s => s.subjectName === subjectFilter);
+        subjectsToSearch.forEach(subject => {
+            const chapters = subject.chapters || Object.values(subject.papers).flatMap(p => p.chapters);
+            let chaptersToSearch = chapterFilter === 'all' ? chapters : chapters.filter(c => c.chapterName === chapterFilter);
+            chaptersToSearch.forEach(chapter => {
+                if (chapter.questions) {
+                    allQuestions.push(...chapter.questions.filter(q => q.questionType === 'MCQ'));
+                }
+            });
+        });
+        if (allQuestions.length === 0) {
+             const toast = document.createElement('div');
+            toast.textContent = 'No MCQs found for this selection.';
+            toast.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 bg-yellow-500 text-black px-4 py-2 rounded-lg shadow-lg';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+            return;
+        }
+        allQuestions.sort(() => 0.5 - Math.random());
+        const selectedQuestions = allQuestions.slice(0, numQuestions);
+        quizState = { questions: selectedQuestions, currentIndex: 0, userAnswers: {}, score: 0 };
+        renderQuizQuestion();
+        showScreen(quizScreen);
+    }
+
+    function renderQuizQuestion() {
+        const { questions, currentIndex } = quizState;
+        if (!questions[currentIndex]) return;
+        const question = questions[currentIndex];
+        document.getElementById('quiz-progress-text').textContent = `Question ${currentIndex + 1}/${questions.length}`;
+        document.getElementById('quiz-progress-bar').style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+        document.getElementById('quiz-question-text').textContent = question.questionText;
+        const optionsContainer = document.getElementById('quiz-options-container');
+        optionsContainer.innerHTML = '';
+        question.options.forEach(option => {
+            const button = document.createElement('button');
+            button.className = 'quiz-option w-full p-4 rounded-lg text-left font-semibold';
+            button.textContent = option;
+            button.onclick = () => selectQuizOption(option, button);
+            optionsContainer.appendChild(button);
+});
+        document.getElementById('quiz-prev-btn').disabled = currentIndex === 0;
+        document.getElementById('quiz-prev-btn').style.opacity = currentIndex === 0 ? 0.5 : 1;
+        const nextButton = document.getElementById('quiz-next-btn');
+        if (currentIndex === questions.length - 1) {
+            nextButton.textContent = 'Finish';
+            nextButton.onclick = finishQuiz;
+        } else {
+            nextButton.textContent = 'Next';
+            nextButton.onclick = nextQuestion;
+        }
+    }
+
+    window.selectQuizOption = (option, buttonElement) => {
+        const { questions, currentIndex, userAnswers } = quizState;
+        if (userAnswers[currentIndex] !== undefined) return;
+        userAnswers[currentIndex] = option;
+        const isCorrect = option === questions[currentIndex].answer;
+        document.querySelectorAll('#quiz-options-container button').forEach(btn => {
+            btn.disabled = true;
+            if (btn.textContent === questions[currentIndex].answer) btn.classList.add('correct');
+        });
+        if (!isCorrect) buttonElement.classList.add('incorrect');
+    }
+
+    window.nextQuestion = () => {
+        if (quizState.currentIndex < quizState.questions.length - 1) {
+            quizState.currentIndex++;
+            renderQuizQuestion();
+        }
+    }
+
+    window.prevQuestion = () => {
+        if (quizState.currentIndex > 0) {
+            quizState.currentIndex--;
+            renderQuizQuestion();
+        }
+    }
+
+    window.finishQuiz = () => {
+        let correctCount = 0;
+        quizState.questions.forEach((q, index) => {
+            if (q.answer === quizState.userAnswers[index]) correctCount++;
+        });
+        const total = quizState.questions.length;
+        document.getElementById('quiz-score-text').textContent = `${correctCount}/${total}`;
+        document.getElementById('quiz-correct-answers').textContent = correctCount;
+        document.getElementById('quiz-incorrect-answers').textContent = total - correctCount;
+        showScreen(quizResultsScreen);
+    }
+
+    window.toggleMenu = () => {
+        sideMenu.classList.toggle('menu-open');
+        menuOverlay.classList.toggle('overlay-visible');
+    }
+
+    function loadIcons() {
+        document.getElementById('icon-container-update-qbank').innerHTML = document.getElementById('icon-update-qbank').outerHTML;
+        document.getElementById('icon-container-own-notes').innerHTML = document.getElementById('icon-own-notes').outerHTML;
+        document.getElementById('icon-container-gdrive').innerHTML = document.getElementById('icon-gdrive').outerHTML;
+        document.getElementById('icon-container-mcq').innerHTML = document.getElementById('icon-mcq').outerHTML;
+        document.getElementById('icon-container-sort').innerHTML = document.getElementById('icon-sort').outerHTML;
+        document.getElementById('icon-container-ref-book').innerHTML = document.getElementById('icon-ref-book').outerHTML;
+        document.getElementById('icon-container-validity').innerHTML = document.getElementById('icon-validity').outerHTML;
+
+        for(let i = 1; i <= 7; i++) {
+             document.getElementById(`icon-container-checkmark${i}`).innerHTML = document.getElementById('icon-checkmark').outerHTML;
+        }
+    }
+
+    async function main() {
+        loadIcons();
+        onAuthStateChanged(auth, async (user) => {
+            try {
+                if (user) {
+                    userId = user.uid;
+                    const userDocRef = doc(db, "users", userId);
+                    const docSnap = await getDoc(userDocRef);
+                    if (docSnap.exists()) {
+                        const userData = docSnap.data();
+                        currentUserData = userData;
+                        const userName = userData.name || 'User';
+                        document.getElementById('welcome-message').textContent = `Welcome back, ${userName}!`;
+                        document.getElementById('profile-name').value = userData.name || '';
+                        if (userData.completedQuestions) {
+                            completedQuestions = userData.completedQuestions;
+                        }
+                        if (userData.bookmarkedQuestions) {
+                            bookmarkedQuestions = userData.bookmarkedQuestions;
+                        }
+                        if (userData.recentActivities) {
+                            recentActivities = userData.recentActivities;
+                        }
+                        renderRecentActivity();
+                        if (userData.selectedYear) {
+                            displayHubForYear(userData.selectedYear);
+                        } else {
+                            showScreen(yearScreen);
+                        }
+                    } else {
+                        showScreen(yearScreen);
+                    }
+                } else {
+                    signInAnonymously(auth).catch((error) => console.error("Anonymous sign-in failed:", error));
+                }
+            } catch (error) {
+                console.error("Error during app startup:", error);
+                const loadingText = document.querySelector("#loading-screen p");
+                if (loadingText) {
+                    loadingText.textContent = "Failed to load. Please check your connection.";
+                }
+            }
+        });
+    }
+    main();
+</script>
+</body>
+</html>
