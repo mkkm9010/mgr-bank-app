@@ -589,7 +589,7 @@
                     <span>Progress Check</span>
                 </a>
                 <a href="#" class="menu-item p-3 rounded-lg text-lg font-medium" onclick="shareApp()">
-                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg>
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367 2.684z"></path></svg>
                     <span>Share with friends</span>
                 </a>
                 <a href="#" class="menu-item p-3 rounded-lg text-lg font-medium" onclick="updateQBank()">
@@ -640,6 +640,7 @@
     let currentChapter = '';
     let currentBackTarget = 'hub';
     let currentScreenId = 'loading-screen';
+    let allChaptersForCurrentSubject = []; // <-- NEW VARIABLE ADDED
 
     // Screen elements
     const loadingScreen = document.getElementById('loading-screen');
@@ -990,9 +991,9 @@
         subjectsContainer.innerHTML = '';
         const currentSubjects = localSubjectsData[currentYear] || [];
         currentSubjects.forEach(subject => {
-             const subjectProgress = calculateSubjectProgress(subject.subjectName);
+             const subjectProgress = calculateSubjectProgress(subject.id); // Changed to subject.id
              subjectsContainer.innerHTML += `
-                <div class="subject-card rounded-lg p-4 flex items-center justify-between cursor-pointer" onclick="selectSubject('${subject.subjectName}')">
+                <div class="subject-card rounded-lg p-4 flex items-center justify-between cursor-pointer" onclick="selectSubject('${subject.id}')">
                     <div class="flex items-center">
                         <div>
                             <h3 class="font-bold text-lg text-white">${subject.subjectName}</h3>
@@ -1009,24 +1010,52 @@
         });
     }
 
-    window.selectSubject = (subjectName) => {
-        currentSubject = subjectName;
-        const subject = localSubjectsData[currentYear]?.find(s => s.subjectName === subjectName);
-        if (subject && subject.chapters) {
-            populateAndShowChapters(subject.subjectName, subject.chapters, 'hub');
-        } else {
-            paperTitle.textContent = subjectName;
+    // =================================================================
+    // ===== START OF UPDATED FUNCTIONS ================================
+    // =================================================================
+
+    window.selectSubject = async (subjectId) => {
+        currentSubject = subjectId;
+        subjectsContainer.innerHTML = `<p class="text-center text-gray-400">Loading chapters for ${subjectId}...</p>`;
+
+        // The new logic to fetch chapters from the subcollection
+        const yearId = currentYear.toLowerCase().replace(' ', '_');
+        const chaptersRef = collection(db, 'years', yearId, 'subjects', subjectId, 'chapters');
+        const chapterSnapshot = await getDocs(chaptersRef);
+
+        allChaptersForCurrentSubject = [];
+        chapterSnapshot.forEach(doc => {
+            allChaptersForCurrentSubject.push({ id: doc.id, ...doc.data() });
+        });
+
+        if (allChaptersForCurrentSubject.length === 0) {
+            alert(`No chapters found for ${subjectId}.`);
+            updateSubjectCards(); // Go back to the subject list
+            return;
+        }
+
+        // Check if this subject uses papers (by checking if any chapter has a paper property)
+        const usesPapers = allChaptersForCurrentSubject.some(ch => ch.paper);
+        
+        if (usesPapers) {
+            const subjectDoc = localSubjectsData[currentYear]?.find(s => s.id === subjectId);
+            paperTitle.textContent = subjectDoc.subjectName;
             showScreen(paperScreen);
+        } else {
+            // If no papers, show all chapters directly
+            populateAndShowChapters(subjectId, allChaptersForCurrentSubject, 'hub');
         }
     }
 
     window.selectPaper = (paperNumber) => {
-        const subject = localSubjectsData[currentYear]?.find(s => s.subjectName === currentSubject);
-        if (subject && subject.papers) {
-            const chapters = subject.papers[`Paper ${paperNumber}`];
-            if (chapters) {
-                populateAndShowChapters(`${subject.subjectName} - Paper ${paperNumber}`, chapters.chapters, 'paper');
-            }
+        // Now, we just filter the chapters we already fetched
+        const chaptersForPaper = allChaptersForCurrentSubject.filter(chapter => chapter.paper === paperNumber);
+        
+        if (chaptersForPaper.length > 0) {
+            const subjectDoc = localSubjectsData[currentYear]?.find(s => s.id === currentSubject);
+            populateAndShowChapters(`${subjectDoc.subjectName} - Paper ${paperNumber}`, chaptersForPaper, 'paper');
+        } else {
+            alert(`No chapters found for Paper ${paperNumber}.`);
         }
     }
 
@@ -1036,36 +1065,51 @@
         currentBackTarget = backTarget;
         chapters.forEach(chapter => {
             chaptersContainer.innerHTML += `
-            <div class="selection-button rounded-lg p-4 text-white font-semibold cursor-pointer flex items-center" onclick="selectChapter('${chapter.chapterName || chapter}')">
-               <span class="ml-4">${chapter.chapterName || chapter}</span>
+            <div class="selection-button rounded-lg p-4 text-white font-semibold cursor-pointer flex items-center" onclick="selectChapter('${chapter.id}', '${chapter.chapterName}')">
+               <span class="ml-4">${chapter.chapterName}</span>
             </div>`;
         });
         const backButton = document.getElementById('chapter-back-button');
-        backButton.onclick = backTarget === 'hub' ? () => showScreen(hubScreen) : () => showScreen(paperScreen);
+        backButton.onclick = backTarget === 'hub' ? () => { switchTab('qbank'); showScreen(hubScreen); } : () => showScreen(paperScreen);
         showScreen(chapterScreen);
     }
 
-    window.selectChapter = (chapterName) => {
+    window.selectChapter = async (chapterId, chapterName) => {
         currentChapter = chapterName;
-        const subject = localSubjectsData[currentYear]?.find(s => s.subjectName === currentSubject);
-        if (!subject) return;
-        let chapterData;
-        if (subject.chapters) {
-            chapterData = subject.chapters.find(c => c.chapterName === chapterName);
-        } else if (subject.papers) {
-             for (const paperKey in subject.papers) {
-                const paper = subject.papers[paperKey];
-                const foundChapter = paper.chapters.find(c => c.chapterName === chapterName);
-                if (foundChapter) { chapterData = foundChapter; break; }
-            }
+        questionViewTitle.textContent = 'Loading...';
+        showQuestionViewScreen(chapterName); // Show screen immediately
+        questionsContainer.innerHTML = `<p class="text-center text-gray-400">Fetching questions for ${chapterName}...</p>`;
+
+        const yearId = currentYear.toLowerCase().replace(' ', '_');
+        
+        // This is the new logic to fetch questions from the 'questions' subcollection
+        const questionsRef = collection(db, 'years', yearId, 'subjects', currentSubject, 'chapters', chapterId, 'questions');
+        const questionSnapshot = await getDocs(questionsRef);
+
+        currentQuestions = []; // Clear previous questions
+        questionSnapshot.forEach(doc => {
+            currentQuestions.push({ id: doc.id, ...doc.data() });
+        });
+
+        if (currentQuestions.length === 0) {
+            questionsContainer.innerHTML = `<p class="text-center text-gray-400">No questions found for this chapter.</p>`;
+        } else {
+            // Now that we have the questions, render them
+            // Make sure the active tab is correctly set before rendering
+            const activeTabButton = document.querySelector('.question-tab-active');
+            const activeTabType = activeTabButton ? activeTabButton.textContent : 'Essay';
+            renderQuestions(activeTabType); 
         }
-        currentQuestions = chapterData ? chapterData.questions || [] : [];
-        showQuestionViewScreen(chapterName);
     }
+
+    // ===============================================================
+    // ===== END OF UPDATED FUNCTIONS ================================
+    // ===============================================================
+
 
     function showQuestionViewScreen(title) {
         questionViewTitle.textContent = title;
-        switchQuestionTab('Essay');
+        switchQuestionTab('Essay'); // Default to Essay tab
         document.getElementById('filter-select').value = 'most';
         showScreen(questionViewScreen);
     }
@@ -1189,6 +1233,9 @@
     window.goBackToHub = () => showScreen(hubScreen);
     window.goBackToChapters = () => {
          const backTargetScreen = currentBackTarget === 'hub' ? hubScreen : paperScreen;
+         if (currentBackTarget === 'hub') {
+             switchTab('qbank');
+         }
          showScreen(backTargetScreen);
     }
     window.goBackToHubFromQuiz = () => showScreen(hubScreen);
@@ -1234,6 +1281,7 @@
         const activeContent = document.getElementById(`content-${tabName}`);
         if (activeContent) {
             activeContent.classList.remove('hidden');
+            if(tabName === 'qbank') updateSubjectCards(); // <-- FIX 1
             if(tabName === 'study') populateStudyModeFilters();
             if(tabName === 'profile') populateProfileScreen();
             if(tabName === 'bookmarks') renderBookmarks();
